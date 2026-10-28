@@ -7,12 +7,14 @@ export function supportEmail() {
   return value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) ? value : null;
 }
 
-export function backendConfigured() {
-  return Boolean(
-    process.env.SUPABASE_URL &&
-      process.env.SUPABASE_PUBLISHABLE_KEY &&
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
+export function missingBackendEnvironment() {
+  return ["SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SERVICE_ROLE_KEY"].filter(
+    (name) => !process.env[name]?.trim(),
   );
+}
+
+export function backendConfigured() {
+  return missingBackendEnvironment().length === 0;
 }
 
 export function maxUploadBytes() {
