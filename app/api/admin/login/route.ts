@@ -4,13 +4,16 @@ import { parseJson } from "@/lib/api";
 import { loginSchema } from "@/lib/validation";
 import { assertSameOrigin, loginBucketKey, requestIp } from "@/lib/security";
 import { writeAudit } from "@/lib/audit";
-import { backendConfigured } from "@/lib/config";
+import { missingBackendEnvironment } from "@/lib/config";
 
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   if (!assertSameOrigin(request)) return Response.json({ error: "Request could not be verified." }, { status: 403 });
-  if (!backendConfigured()) return Response.json({ error: "Administrator sign-in is not configured." }, { status: 503 });
+  const missingEnvironment = missingBackendEnvironment();
+  if (missingEnvironment.length) {
+    return Response.json({ error: `Administrator sign-in is not configured. Missing: ${missingEnvironment.join(", ")}.` }, { status: 503 });
+  }
   try {
     const input = await parseJson(request, loginSchema);
     const email = input.email.trim().toLowerCase();
