@@ -62,7 +62,6 @@ export async function POST(request: Request) {
       return Response.json({ error: "Upload storage is not configured." }, { status: 503 });
     }
     if (error instanceof Error && error.message === "Authentication required.") return authErrorResponse(error);
-    if (error instanceof Error && error.message.startsWith("Change your initial password")) return authErrorResponse(error);
     return Response.json({ error: error instanceof Error ? error.message : "Could not start the upload." }, { status: 400 });
   }
 }

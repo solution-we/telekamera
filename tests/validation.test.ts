@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { passwordChangeSchema, uploadInitiateSchema } from "../lib/validation";
+import { pinChangeSchema, pinLoginSchema, uploadInitiateSchema } from "../lib/validation";
 
 const baseUpload = {
   version: "1.2.0",
@@ -14,9 +14,16 @@ const baseUpload = {
 };
 
 describe("administrator input validation", () => {
-  it("requires a strong new password", () => {
-    expect(passwordChangeSchema.safeParse({ password: "adminoftelecamera" }).success).toBe(false);
-    expect(passwordChangeSchema.safeParse({ password: "Sufficiently-Long9" }).success).toBe(true);
+  it("accepts one-to-twelve digit codes and rejects other input", () => {
+    expect(pinLoginSchema.safeParse({ pin: "2008" }).success).toBe(true);
+    expect(pinLoginSchema.safeParse({ pin: "123456789012" }).success).toBe(true);
+    expect(pinLoginSchema.safeParse({ pin: "1234567890123" }).success).toBe(false);
+    expect(pinLoginSchema.safeParse({ pin: "12ab" }).success).toBe(false);
+  });
+
+  it("requires matching codes when changing the admin code", () => {
+    expect(pinChangeSchema.safeParse({ pin: "2008", confirmation: "2008" }).success).toBe(true);
+    expect(pinChangeSchema.safeParse({ pin: "2008", confirmation: "2009" }).success).toBe(false);
   });
 
   it("accepts an APK and rejects platform-incompatible installer formats", () => {

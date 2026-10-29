@@ -1,12 +1,14 @@
 import { z } from "zod";
 
-export const loginSchema = z.object({
-  email: z.string().trim().email().max(254),
-  password: z.string().min(1).max(256),
+export const pinLoginSchema = z.object({
+  pin: z.string().regex(/^[0-9]{1,12}$/),
 });
 
-export const passwordChangeSchema = z.object({
-  password: z.string().min(14).max(128).regex(/[a-z]/).regex(/[A-Z]/).regex(/[0-9]/),
+export const pinChangeSchema = z.object({
+  pin: z.string().regex(/^[0-9]{1,12}$/),
+  confirmation: z.string().regex(/^[0-9]{1,12}$/),
+}).refine((value) => value.pin === value.confirmation, {
+  message: "The access codes do not match.",
 });
 
 const releaseBase = {

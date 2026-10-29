@@ -8,7 +8,7 @@ export function supportEmail() {
 }
 
 export function missingBackendEnvironment() {
-  return ["SUPABASE_URL", "SUPABASE_PUBLISHABLE_KEY", "SUPABASE_SERVICE_ROLE_KEY"].filter(
+  return ["SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "AUTH_RATE_LIMIT_SECRET"].filter(
     (name) => !process.env[name]?.trim(),
   );
 }

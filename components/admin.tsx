@@ -24,44 +24,43 @@ export function AdminLoginForm() {
     setBusy(true); setMessage(null);
     const form = new FormData(event.currentTarget);
     try {
-      const result = await postJson("/api/admin/login", { email: form.get("email"), password: form.get("password") });
-      router.push(result.mustChangePassword ? "/admin/change-password" : "/admin");
+      await postJson("/api/admin/login", { pin: form.get("pin") });
+      router.push("/admin");
       router.refresh();
     } catch (error) {
       setMessage({ kind: "error", text: error instanceof Error ? error.message : "Unable to sign in." });
     } finally { setBusy(false); }
   }
   return <form className="adminForm" onSubmit={submit}>
-    <label>Email address<input type="email" name="email" autoComplete="username" required maxLength={254}/></label>
-    <label>Password<input type="password" name="password" autoComplete="current-password" required maxLength={256}/></label>
+    <label>12-digit access code<input type="password" name="pin" inputMode="numeric" autoComplete="one-time-code" placeholder="Enter 12 digits" required maxLength={12} pattern="[0-9]{1,12}"/></label>
     {message ? <p className={`formMessage ${message.kind}`} role="status">{message.text}</p> : null}
-    <button className="button buttonPrimary buttonFull" disabled={busy}>{busy ? "Signing in…" : "Sign in"}<Icon name="arrow" size={16}/></button>
+    <button className="button buttonPrimary buttonFull" disabled={busy}>{busy ? "Checking…" : "Continue"}<Icon name="arrow" size={16}/></button>
   </form>;
 }
 
-export function PasswordChangeForm() {
-  const router = useRouter();
+export function AdminPinForm() {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<Message>(null);
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setMessage(null);
-    const form = new FormData(event.currentTarget);
-    const password = String(form.get("password") || "");
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
+    const pin = String(form.get("pin") || "");
     const confirmation = String(form.get("confirmation") || "");
-    if (password !== confirmation) { setMessage({ kind: "error", text: "The passwords do not match." }); setBusy(false); return; }
+    if (pin !== confirmation) { setMessage({ kind: "error", text: "The access codes do not match." }); setBusy(false); return; }
     try {
-      await postJson("/api/admin/password", { password });
-      setMessage({ kind: "success", text: "Password updated. Please sign in again with your new password." });
-      router.push("/admin/login"); router.refresh();
-    } catch (error) { setMessage({ kind: "error", text: error instanceof Error ? error.message : "Could not change the password." }); }
+      await postJson("/api/admin/pin", { pin, confirmation });
+      setMessage({ kind: "success", text: "The admin access code has been updated." });
+      formElement.reset();
+    } catch (error) { setMessage({ kind: "error", text: error instanceof Error ? error.message : "Could not change the access code." }); }
     finally { setBusy(false); }
   }
   return <form className="adminForm" onSubmit={submit}>
-    <label>New password<input type="password" name="password" autoComplete="new-password" required minLength={14} maxLength={128}/></label>
-    <small className="formHint">Use at least 14 characters with a lowercase letter, uppercase letter, and number.</small>
-    <label>Confirm new password<input type="password" name="confirmation" autoComplete="new-password" required minLength={14} maxLength={128}/></label>
+    <label>New numeric code<input type="password" name="pin" inputMode="numeric" autoComplete="off" required maxLength={12} pattern="[0-9]{1,12}"/></label>
+    <small className="formHint">Use 1 to 12 digits. The code is stored as a one-way hash.</small>
+    <label>Confirm new code<input type="password" name="confirmation" inputMode="numeric" autoComplete="off" required maxLength={12} pattern="[0-9]{1,12}"/></label>
     {message ? <p className={`formMessage ${message.kind}`} role="status">{message.text}</p> : null}
-    <button className="button buttonPrimary buttonFull" disabled={busy}>{busy ? "Saving…" : "Set new password"}<Icon name="arrow" size={16}/></button>
+    <button className="button buttonPrimary buttonFull" disabled={busy}>{busy ? "Saving…" : "Set access code"}<Icon name="arrow" size={16}/></button>
   </form>;
 }
 
@@ -72,7 +71,7 @@ export function AdminLogoutButton() {
     setBusy(true);
     try { await postJson("/api/admin/logout"); } finally { router.push("/admin/login"); router.refresh(); }
   }
-  return <button className="button buttonOutline buttonSmall" onClick={logout} disabled={busy}>{busy ? "Signing out…" : "Sign out"}</button>;
+  return <button className="button buttonOutline buttonSmall" onClick={logout} disabled={busy}>{busy ? "Locking…" : "Lock admin"}</button>;
 }
 
 type UploadForm = { platform: "android" | "windows"; version: string; buildNumber: string; channel: string; releaseDate: string; minimumOs: string; releaseNotes: string; file: File };

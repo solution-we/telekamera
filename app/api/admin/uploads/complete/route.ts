@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     if (error instanceof Error && error.message.includes("Missing required server environment")) {
       return Response.json({ error: "Upload storage is not configured." }, { status: 503 });
     }
-    if (error instanceof Error && ["Authentication required.", "Change your initial password before continuing."].includes(error.message)) return authErrorResponse(error);
+    if (error instanceof Error && error.message === "Authentication required.") return authErrorResponse(error);
     return Response.json({ error: "Could not verify the uploaded file. Retry or start the upload again." }, { status: 400 });
   }
 }

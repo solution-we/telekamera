@@ -13,8 +13,9 @@ export function assertSameOrigin(request: Request) {
 }
 
 export function requestIp(request: Request) {
+  const realIp = request.headers.get("x-real-ip")?.trim();
   const forwarded = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
-  return forwarded || request.headers.get("x-real-ip") || "unknown";
+  return realIp || forwarded || "unknown";
 }
 
 export function hashIp(ip: string) {
@@ -23,7 +24,7 @@ export function hashIp(ip: string) {
   return createHmac("sha256", secret).update(ip).digest("hex");
 }
 
-export function loginBucketKey(scope: "email" | "ip", value: string) {
+export function loginBucketKey(scope: "ip" | "pin", value: string) {
   const secret = process.env.AUTH_RATE_LIMIT_SECRET;
   if (!secret || secret.length < 32) throw new Error("Missing required server environment variable: AUTH_RATE_LIMIT_SECRET");
   return createHmac("sha256", secret).update(`${scope}|${value.toLowerCase()}`).digest("hex");
