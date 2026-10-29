@@ -25,7 +25,25 @@ export async function POST(request: Request) {
       p_candidate_pin: input.pin,
       p_initial_pin: process.env.ADMIN_NUMERIC_CODE || null,
     });
-    if (error) return Response.json({ error: "Access verification is temporarily unavailable." }, { status: 503 });
+    if (error) {
+      const code = error.code || "UNKNOWN";
+      console.error("PIN verification RPC failed", {
+        code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+      });
+      const message = code === "PGRST202" || code === "42883"
+        ? `Supabase cannot find the PIN verification function (${code}). Run migration 003, then reload the schema.`
+        : code === "42501"
+          ? `Supabase denied access to the PIN verification function (${code}). Re-run migration 003.`
+          : code === "PGRST301" || code === "PGRST302"
+            ? `Supabase rejected the server API key (${code}). Check SUPABASE_SERVICE_ROLE_KEY in Vercel.`
+            : code === "42P01"
+              ? `A required database table is missing (${code}). Apply migrations 001 through 003 in order.`
+              : `Access verification is temporarily unavailable (Supabase error ${code}).`;
+      return Response.json({ error: message }, { status: 503 });
+    }
     const verification = data as { ok?: boolean; locked?: boolean; unavailable?: boolean; attempts_remaining?: number } | null;
     if (verification?.unavailable) return Response.json({ error: "The access code is not configured yet." }, { status: 503 });
     if (verification?.ok !== true) {
